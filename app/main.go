@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"net"
 	"os"
+
+	"github.com/codecrafters-io/http-server-starter-go/app/parser"
+	"github.com/codecrafters-io/http-server-starter-go/app/router"
+	"github.com/codecrafters-io/http-server-starter-go/app/writer"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports above (feel free to remove this!)
@@ -23,9 +27,21 @@ func main() {
 	}
 	
 	conn, err := l.Accept()
+	defer conn.Close()
 	if err != nil {
 		fmt.Println("Error accepting connection: ", err.Error())
 		os.Exit(1)
 	}
-	conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
+	req := parser.ReadRequest(conn)
+	router := router.New(
+		map[string]func(*parser.HttpRequest) *parser.HttpResponse{"/": func(req *parser.HttpRequest) *parser.HttpResponse {
+			return &parser.HttpResponse{
+				Code: 200,
+			}
+		}},
+	)
+	response := router.Route(req)
+
+	writer := writer.New(conn)
+	writer.Write(response)
 }
