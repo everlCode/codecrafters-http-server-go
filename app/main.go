@@ -5,9 +5,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/codecrafters-io/http-server-starter-go/app/parser"
-	"github.com/codecrafters-io/http-server-starter-go/app/router"
-	"github.com/codecrafters-io/http-server-starter-go/app/writer"
+	"github.com/codecrafters-io/http-server-starter-go/app/http"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports above (feel free to remove this!)
@@ -19,29 +17,39 @@ func main() {
 	fmt.Println("Logs from your program will appear here!")
 
 	// TODO: Uncomment the code below to pass the first stage
-	
+
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
 		fmt.Println("Failed to bind to port 4221")
 		os.Exit(1)
 	}
-	
+
+	router := http.NewRouter(
+		map[string]http.Handler{"/": func(req *http.Request) *http.Response {
+			return &http.Response{
+				Code: http.StatusOK,
+			}
+		}},
+	)
+	router.AddRoute("/echo/{str}", echo)
+
 	conn, err := l.Accept()
-	defer conn.Close()
 	if err != nil {
 		fmt.Println("Error accepting connection: ", err.Error())
 		os.Exit(1)
 	}
-	req := parser.ReadRequest(conn)
-	router := router.New(
-		map[string]func(*parser.HttpRequest) *parser.HttpResponse{"/": func(req *parser.HttpRequest) *parser.HttpResponse {
-			return &parser.HttpResponse{
-				Code: 200,
-			}
-		}},
-	)
-	response := router.Route(req)
+	defer conn.Close()
 
-	writer := writer.New(conn)
-	writer.Write(response)
+	req, err := http.ReadRequest(conn)
+	if err != nil {
+		resp := http.Response{
+			Code: http.StatusBadRequest,
+		}
+		resp.Write(conn)
+		return
+	}
+
+	response := router.Route(req)
+	response.Write(conn)
 }
+
