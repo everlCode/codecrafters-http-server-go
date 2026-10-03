@@ -47,8 +47,14 @@ func(s *Server) serve(conn net.Conn) {
 		}
 
 		response := s.Handler(req)
+		if header := req.Header(httpx.Connection); header != nil && header.Value == "close" {
+			response.AddHeader(httpx.Connection, "close")
+			response.Write(conn)
+			conn.Close()
+			break
+		
+		}
+
 		response.Write(conn)
 	}
-	
-
 }

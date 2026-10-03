@@ -63,6 +63,16 @@ func (r *Response) AddHeader(name string, value string) {
 	r.Headers = append(r.Headers, &Header{Name: name, Value: value})
 }
 
+func (r *Response) Header(name string) *Header {
+	for _, header := range r.Headers {
+		if strings.EqualFold(header.Name, name) {
+			return header
+		}
+	}
+
+	return nil
+}
+
 func Text(code int, body string) *Response {
 	return NewResponse(
 		code,

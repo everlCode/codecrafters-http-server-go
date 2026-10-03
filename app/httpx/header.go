@@ -8,7 +8,8 @@ type Header struct {
 const (
 	HeaderUserAgent = "User-Agent"
 	ContentLength   = "Content-Length"
-	ContentType   = "Content-Type"
-	AcceptEncoding   = "Accept-Encoding"
-	ContentEncoding   = "Content-Encoding"
+	ContentType     = "Content-Type"
+	AcceptEncoding  = "Accept-Encoding"
+	ContentEncoding = "Content-Encoding"
+	Connection      = "Connection"
 )
