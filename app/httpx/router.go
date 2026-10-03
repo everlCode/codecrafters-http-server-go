@@ -1,14 +1,14 @@
-package http
+package httpx
 
 import "strings"
 
 type Router struct {
-	Routes []*Route
+	routes []*route
 }
 
-type Route struct {
+type route struct {
 	Name     string
-	Segments []*segment
+	segments []*segment
 	Handler  Handler
 }
 
@@ -24,7 +24,7 @@ func NewRouter() *Router {
 }
 
 func (r *Router) Route(req *Request) *Response {
-	route, params := r.GetRoute(req.URI)
+	route, params := r.match(req.URI)
 	if route == nil {
 		return &Response{
 			Code: StatusNotFound,
@@ -36,35 +36,35 @@ func (r *Router) Route(req *Request) *Response {
 }
 
 func (r *Router) AddRoute(path string, handler Handler) {
-	route := Route{Name: path, Handler: handler}
+	route := route{Name: path, Handler: handler}
 
 	for _, part := range strings.Split(path, "/") {
 		if strings.HasPrefix(part, "{") && strings.HasSuffix(part, "}") {
-			route.Segments = append(route.Segments, &segment{Name: strings.Trim(part, "{}"), isParam: true})
+			route.segments = append(route.segments, &segment{Name: strings.Trim(part, "{}"), isParam: true})
 		} else {
-			route.Segments = append(route.Segments, &segment{Name: part})
+			route.segments = append(route.segments, &segment{Name: part})
 		}
 	}
 
-	r.Routes = append(r.Routes, &route)
+	r.routes = append(r.routes, &route)
 }
 
-func (r *Router) GetRoute(path string) (*Route, map[string]string) {
+func (r *Router) match(path string) (*route, map[string]string) {
 	pathParts := strings.Split(path, "/")
-	for _, route := range r.Routes {
-		if len(route.Segments) != len(pathParts) {
+	for _, route := range r.routes {
+		if len(route.segments) != len(pathParts) {
 			continue
 		}
 
 		var isEqual bool = true
 		params := make(map[string]string)
 		for k, part := range pathParts {
-			if part != route.Segments[k].Name && !route.Segments[k].isParam {
+			if part != route.segments[k].Name && !route.segments[k].isParam {
 				isEqual = false
 				break
 			}
-			if route.Segments[k].isParam {
-				params[route.Segments[k].Name] = part
+			if route.segments[k].isParam {
+				params[route.segments[k].Name] = part
 			}
 
 		}

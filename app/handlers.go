@@ -1,38 +1,34 @@
 package main
 
 import (
-	"strconv"
-
-	"github.com/codecrafters-io/http-server-starter-go/app/http"
+	"github.com/codecrafters-io/http-server-starter-go/app/httpx"
 )
 
-func echo(req *http.Request) *http.Response {
+func echo(req *httpx.Request) *httpx.Response {
 	param, ok := req.Params["str"]
 	if !ok {
-		return &http.Response{
-			Code: http.StatusNotFound,
+		return &httpx.Response{
+			Code: httpx.StatusNotFound,
 		}
 	}
 
-	return http.NewResponse(
-		http.StatusOK,
-		map[string]string{"Content-Type": "text/plain", "Content-Length": strconv.Itoa(len(param))},
+	return httpx.Text(
+		httpx.StatusOK,
 		param,
 	)
 }
 
 
-func user_agent(req *http.Request) *http.Response {
-	header := req.Header(http.HeaderUserAgent)
+func user_agent(req *httpx.Request) *httpx.Response {
+	header := req.Header(httpx.HeaderUserAgent)
 	if header == nil {
-		return &http.Response{
-			Code: http.StatusNotFound,
+		return &httpx.Response{
+			Code: httpx.StatusBadRequest,
 		}
 	}
 
-	return http.NewResponse(
-		http.StatusOK,
-		map[string]string{"Content-Type": "text/plain", "Content-Length": strconv.Itoa(len(header.Value))},
+	return httpx.Text(
+		httpx.StatusOK,
 		header.Value,
 	)
 }

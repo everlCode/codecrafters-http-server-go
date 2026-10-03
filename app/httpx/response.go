@@ -1,4 +1,4 @@
-package http
+package httpx
 
 import (
 	"io"
@@ -48,6 +48,14 @@ func getStatusByCode(code int) string {
 func (hr Response) Write(writer io.Writer) error {
 	_, err := writer.Write(hr.Marshal())
 	return err
+}
+
+func Text(code int, body string) *Response {
+	return NewResponse(
+		code,
+		map[string]string{"Content-Type": "text/plain", "Content-Length": strconv.Itoa(len(body))},
+		body,
+	)
 }
 
 func NewResponse(code int, headers map[string]string, body string) *Response {
