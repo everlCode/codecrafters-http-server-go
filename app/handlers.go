@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -72,6 +73,7 @@ func (h *Handlers) createFile(req *httpx.Request) *httpx.Response {
 	file, err := os.Create(filepath.Join(h.Config.Dirname, filename))
 	defer file.Close()
 	if err != nil {
+		fmt.Println(err.Error())
 		return httpx.NotFound()
 	}
 	_, err = file.Write(req.Body)

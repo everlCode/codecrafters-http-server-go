@@ -32,22 +32,23 @@ func(s *Server) Start() error {
 }
 
 func(s *Server) serve(conn net.Conn) {
-	defer conn.Close()
-
-	req, err := httpx.ReadRequest(conn)
-	if err != nil {
-		fmt.Println(err.Error())
-		resp := httpx.Response{
-			Code: httpx.StatusBadRequest,
-		}
-		err := resp.Write(conn)
+	for {
+		req, err := httpx.ReadRequest(conn)
 		if err != nil {
 			fmt.Println(err.Error())
+			resp := httpx.Response{
+				Code: httpx.StatusBadRequest,
+			}
+			err := resp.Write(conn)
+			if err != nil {
+				fmt.Println(err.Error())
+			}
+			return
 		}
-		return
-	}
 
-	response := s.Handler(req)
-	response.Write(conn)
+		response := s.Handler(req)
+		response.Write(conn)
+	}
+	
 
 }

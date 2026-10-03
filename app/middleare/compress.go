@@ -23,7 +23,8 @@ func Compress(next httpx.Handler) httpx.Handler {
 		if header = req.Header(httpx.AcceptEncoding);header == nil {
 			return resp
 		}
-		method, encodeHandler := compressMethod(header.Value);if encodeHandler == nil {
+		method, encodeHandler := selectEncoder(header.Value);
+		if encodeHandler == nil {
 			return resp
 		}
 		compressedBody, err := encodeHandler(resp.Body)
@@ -43,22 +44,23 @@ func gzipCompress(input []byte) ([]byte, error) {
 	}
 	var buf bytes.Buffer
 	writer := gzip.NewWriter(&buf)
-	_, err := writer.Write(input);if err != nil {
+	if _, err := writer.Write(input); err != nil {
 		return nil, err
 	}
-	err = writer.Close();if err != nil {
+	err := writer.Close();if err != nil {
 		return nil, err
 	}
 
 	return buf.Bytes(), nil
 }
 
-func compressMethod(methods string) (string, encoder) {
+func selectEncoder(methods string) (string, encoder) {
 	parts := strings.Split(methods, ",")
 
 	for _, method := range parts {
 		method = strings.ToLower(strings.TrimSpace(method))
-		encoder, ok := encoders[method];if !ok {
+		encoder, ok := encoders[method];
+		if !ok {
 			continue
 		}
 
