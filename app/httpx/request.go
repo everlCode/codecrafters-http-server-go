@@ -19,17 +19,18 @@ type Request struct {
 
 func ReadRequest(reader io.Reader) (*Request, error) {
 	r := bufio.NewReader(reader)
-	line, _, err := r.ReadLine()
+	method, uri, version, err := readRequestLine(r)
 	if err != nil {
 		return nil, err
 	}
-	parts := strings.Split(string(line), " ")
-	if len(parts) < 3 {
-		return nil, errors.New("Неккоректный запрос!")
-
+	req := &Request{
+		Method:  method,
+		URI:     uri,
+		Version: version,
 	}
+
 	var headers []*Header
-	var contentLenght int
+
 	for {
 		header, _, err := r.ReadLine()
 		if err != nil {
@@ -42,27 +43,38 @@ func ReadRequest(reader io.Reader) (*Request, error) {
 		if len(headerParts) < 2 {
 			continue
 		}
-		if headerParts[0] == ContentLength {
-			contentLenght, err = strconv.Atoi(headerParts[1])
-			if err != nil {
-				return nil, err
-			}
-		}
 		headers = append(headers, &Header{Name: headerParts[0], Value: headerParts[1]})
 	}
-	buff := make([]byte, contentLenght)
-	_, err = r.Read(buff)
+	req.Headers = headers
+	var contentLenght int
+	contentLengthHeader := req.Header(ContentLength);if contentLengthHeader != nil {
+		contentLenght, _ = strconv.Atoi(contentLengthHeader.Value)
+	}
+	
+	if contentLenght > 0 {
+		buff := make([]byte, contentLenght)
+		_, err = r.Read(buff)
+		if err != nil {
+			return nil, err
+		}
+		req.Body = buff
+	}
+	
+	return req, nil
+}
+
+func readRequestLine(r *bufio.Reader) (string, string, string, error) {
+	line, _, err := r.ReadLine()
 	if err != nil {
-		return nil, err
+		return "", "", "", err
+	}
+	parts := strings.Split(string(line), " ")
+	if len(parts) < 3 {
+		return "", "", "", errors.New("Неккоректный запрос!")
+
 	}
 
-	return &Request{
-		Method:  strings.ToLower(parts[0]),
-		URI:     parts[1],
-		Version: parts[2],
-		Headers: headers,
-		Body:    buff,
-	}, nil
+	return strings.ToUpper(parts[0]), parts[1], parts[2], nil
 }
 
 func headerParts(header string) []string {

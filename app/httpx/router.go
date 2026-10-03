@@ -18,8 +18,8 @@ type segment struct {
 }
 
 const (
-	GET = "get"
-	POST = "post"
+	GET = "GET"
+	POST = "POST"
 )
 
 type Handler func(*Request) *Response
@@ -31,9 +31,7 @@ func NewRouter() *Router {
 func (r *Router) Route(req *Request) *Response {
 	route, params := r.match(req)
 	if route == nil {
-		return &Response{
-			Code: StatusNotFound,
-		}
+		return NotFound()
 	}
 	req.Params = params
 
@@ -42,7 +40,7 @@ func (r *Router) Route(req *Request) *Response {
 
 func (r *Router) AddRoute(method string, path string, handler Handler) {
 	route := route{
-		Method: strings.ToLower(method),
+		Method: strings.ToUpper(method),
 		Handler: handler,
 	}
 
@@ -66,7 +64,7 @@ func (r *Router) match(req *Request) (*route, map[string]string) {
 		if len(route.segments) != len(pathParts) {
 			continue
 		}
-		params := make(map[string]string)
+		var params map[string]string
 		ok, params := route.match(pathParts)
 		if ok {
 			return route, params

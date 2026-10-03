@@ -9,12 +9,12 @@ import (
 type Response struct {
 	Code    int
 	Headers []*Header
-	Body    string
+	Body    []byte
 }
 
 const (
 	StatusOK         = 200
-	StausCreated     = 201
+	StatusCreated    = 201
 	StatusBadRequest = 400
 	StatusNotFound   = 404
 )
@@ -33,8 +33,8 @@ func (r *Response) Marshal() []byte {
 	}
 	response += ContentLength + ": " + strconv.Itoa(len(r.Body)) + "\r\n"
 	response += "\r\n"
-	
-	response += r.Body
+
+	response += string(r.Body)
 
 	return []byte(response)
 }
@@ -47,16 +47,20 @@ func getStatusByCode(code int) string {
 		return "Bad Request"
 	case StatusNotFound:
 		return "Not Found"
-	case StausCreated:
+	case StatusCreated:
 		return "Created"
 	}
 
 	return "Ok"
 }
 
-func (hr Response) Write(writer io.Writer) error {
-	_, err := writer.Write(hr.Marshal())
+func (r Response) Write(writer io.Writer) error {
+	_, err := writer.Write(r.Marshal())
 	return err
+}
+
+func (r *Response) AddHeader(name string, value string) {
+	r.Headers = append(r.Headers, &Header{Name: name, Value: value})
 }
 
 func Text(code int, body string) *Response {
@@ -85,6 +89,6 @@ func NewResponse(code int, headers map[string]string, body string) *Response {
 	return &Response{
 		Code:    code,
 		Headers: hs,
-		Body:    body,
+		Body:    []byte(body),
 	}
 }

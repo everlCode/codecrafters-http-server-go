@@ -29,7 +29,6 @@ func echo(req *httpx.Request) *httpx.Response {
 	)
 }
 
-
 func user_agent(req *httpx.Request) *httpx.Response {
 	header := req.Header(httpx.HeaderUserAgent)
 	if header == nil {
@@ -53,7 +52,7 @@ func (h *Handlers) file(req *httpx.Request) *httpx.Response {
 	file, err := os.ReadFile(filepath.Join(h.Config.Dirname, filename))
 	if err != nil {
 		wd, _ := os.Getwd()
-    	log.Printf("open %q (cwd=%q): %v", file, wd, err)
+		log.Printf("open %q (cwd=%q): %v", file, wd, err)
 		return httpx.NotFound()
 	}
 
@@ -71,15 +70,23 @@ func (h *Handlers) createFile(req *httpx.Request) *httpx.Response {
 	}
 
 	file, err := os.Create(filepath.Join(h.Config.Dirname, filename))
+	defer file.Close()
 	if err != nil {
 		wd, _ := os.Getwd()
-    	log.Printf("open %q (cwd=%q): %v", file, wd, err)
+		log.Printf("open %q (cwd=%q): %v", file, wd, err)
 		return httpx.NotFound()
 	}
-	file.Write(req.Body)
+	_, err = file.Write(req.Body)
+	if err != nil {
+		return httpx.NewResponse(
+			httpx.StatusBadRequest,
+			map[string]string{httpx.ContentType: "application/octet-stream"},
+			"",
+		)
+	}
 
 	return httpx.NewResponse(
-		httpx.StausCreated,
+		httpx.StatusCreated,
 		map[string]string{httpx.ContentType: "application/octet-stream"},
 		"",
 	)
