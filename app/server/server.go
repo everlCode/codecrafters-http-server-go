@@ -16,16 +16,14 @@ func New(handler httpx.Handler)*Server {
 	return &Server{Handler: handler}
 }
 
-func(s *Server) Start() {
+func(s *Server) Start() error {
 	l, err := net.Listen("tcp", "0.0.0.0:4221")
 	if err != nil {
-		fmt.Println("Failed to bind to port 4221")
-		os.Exit(1)
+		return err
 	}
 
 	for {
 		conn, err := l.Accept()
-		defer conn.Close()
 		if err != nil {
 			fmt.Println("Error accepting connection: ", err.Error())
 			os.Exit(1)
@@ -33,8 +31,6 @@ func(s *Server) Start() {
 
 		go s.serve(conn)
 	}
-
-	
 }
 
 func(s *Server) serve(conn net.Conn) {
@@ -42,6 +38,7 @@ func(s *Server) serve(conn net.Conn) {
 
 	req, err := httpx.ReadRequest(conn)
 	if err != nil {
+		fmt.Println(err.Error())
 		resp := httpx.Response{
 			Code: httpx.StatusBadRequest,
 		}

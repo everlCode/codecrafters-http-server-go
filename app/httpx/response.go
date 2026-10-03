@@ -23,9 +23,11 @@ func (r *Response) Marshal() []byte {
 	response += strconv.Itoa(r.Code)
 	response += " " + getStatusByCode(r.Code) + "\r\n"
 
+	r.Headers = append(r.Headers, &Header{Name: ContentLength, Value: strconv.Itoa(len(r.Body))})
 	for _, header := range r.Headers {
 		response += header.Name + ": " + header.Value + "\r\n"
 	}
+
 	response += "\r\n"
 	response += r.Body
 
@@ -53,8 +55,16 @@ func (hr Response) Write(writer io.Writer) error {
 func Text(code int, body string) *Response {
 	return NewResponse(
 		code,
-		map[string]string{"Content-Type": "text/plain", "Content-Length": strconv.Itoa(len(body))},
+		map[string]string{"Content-Type": "text/plain"},
 		body,
+	)
+}
+
+func NotFound() *Response {
+	return NewResponse(
+		StatusNotFound,
+		map[string]string{"Content-Type": "text/plain"},
+		"",
 	)
 }
 

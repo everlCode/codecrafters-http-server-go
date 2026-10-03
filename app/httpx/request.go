@@ -15,15 +15,6 @@ type Request struct {
 	Params map[string]string
 }
 
-type Header struct {
-	Name string
-	Value string
-}
-
-const (
-	HeaderUserAgent = "User-Agent"
-)
-
 func ReadRequest(reader io.Reader) (*Request, error) {
 	r := bufio.NewReader(reader)
 	line, _, err := r.ReadLine()
@@ -70,7 +61,7 @@ func headerParts(header string) []string {
 
 func (r *Request) Header(name string) *Header {
 	for _, header := range r.Headers {
-		if header.Name == name {
+		if strings.EqualFold(header.Name, name)  {
 			return header
 		}
 	}

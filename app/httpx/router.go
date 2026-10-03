@@ -55,23 +55,26 @@ func (r *Router) match(path string) (*route, map[string]string) {
 		if len(route.segments) != len(pathParts) {
 			continue
 		}
-
-		var isEqual bool = true
 		params := make(map[string]string)
-		for k, part := range pathParts {
-			if part != route.segments[k].Name && !route.segments[k].isParam {
-				isEqual = false
-				break
-			}
-			if route.segments[k].isParam {
-				params[route.segments[k].Name] = part
-			}
-
-		}
-		if isEqual {
+		ok, params := route.match(pathParts)
+		if ok {
 			return route, params
 		}
 	}
 
 	return nil, map[string]string{}
+}
+
+func (r *route) match(parts []string) (bool, map[string]string) {
+	params := make(map[string]string)
+	for k, part := range parts {
+		if part != r.segments[k].Name && !r.segments[k].isParam {
+			return false, nil
+		}
+		if r.segments[k].isParam {
+			params[r.segments[k].Name] = part
+		}
+	}
+
+	return true, params
 }

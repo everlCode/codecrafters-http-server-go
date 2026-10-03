@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
 
+	"github.com/codecrafters-io/http-server-starter-go/app/config"
 	"github.com/codecrafters-io/http-server-starter-go/app/httpx"
 	"github.com/codecrafters-io/http-server-starter-go/app/server"
 )
@@ -14,16 +16,22 @@ var _ = net.Listen
 var _ = os.Exit
 
 func main() {
-	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
+
+	cfg := config.New()
+	handlers := NewHandlers(cfg)
 
 	router := httpx.NewRouter()
 	router.AddRoute("/", func(req *httpx.Request) *httpx.Response {
 		return httpx.Text(httpx.StatusOK, "")
 	})
-	router.AddRoute("/echo/{str}", echo)
-	router.AddRoute("/user-agent", user_agent)
+	router.AddRoute("/echo/{str}", handlers.echo)
+	router.AddRoute("/user-agent", handlers.user_agent)
+	router.AddRoute("/files/{filename}", handlers.file)
 
-	server := server.New(router.Route)
-	server.Start()
+	s := server.New(router.Route)
+	err := s.Start()
+	if err != nil {
+		log.Fatal("Error: " + err.Error())
+	}
 }
