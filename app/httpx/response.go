@@ -3,6 +3,7 @@ package httpx
 import (
 	"io"
 	"strconv"
+	"strings"
 )
 
 type Response struct {
@@ -13,6 +14,7 @@ type Response struct {
 
 const (
 	StatusOK         = 200
+	StausCreated     = 201
 	StatusBadRequest = 400
 	StatusNotFound   = 404
 )
@@ -23,12 +25,15 @@ func (r *Response) Marshal() []byte {
 	response += strconv.Itoa(r.Code)
 	response += " " + getStatusByCode(r.Code) + "\r\n"
 
-	r.Headers = append(r.Headers, &Header{Name: ContentLength, Value: strconv.Itoa(len(r.Body))})
 	for _, header := range r.Headers {
+		if strings.EqualFold(header.Name, ContentLength) {
+			continue
+		}
 		response += header.Name + ": " + header.Value + "\r\n"
 	}
-
+	response += ContentLength + ": " + strconv.Itoa(len(r.Body)) + "\r\n"
 	response += "\r\n"
+	
 	response += r.Body
 
 	return []byte(response)
@@ -42,6 +47,8 @@ func getStatusByCode(code int) string {
 		return "Bad Request"
 	case StatusNotFound:
 		return "Not Found"
+	case StausCreated:
+		return "Created"
 	}
 
 	return "Ok"

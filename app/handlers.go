@@ -17,12 +17,10 @@ func NewHandlers(cfg *config.Config) *Handlers {
 	return &Handlers{Config: cfg}
 }
 
-func (h *Handlers) echo(req *httpx.Request) *httpx.Response {
+func echo(req *httpx.Request) *httpx.Response {
 	param, ok := req.Params["str"]
 	if !ok {
-		return &httpx.Response{
-			Code: httpx.StatusNotFound,
-		}
+		return httpx.NotFound()
 	}
 
 	return httpx.Text(
@@ -32,7 +30,7 @@ func (h *Handlers) echo(req *httpx.Request) *httpx.Response {
 }
 
 
-func (h *Handlers) user_agent(req *httpx.Request) *httpx.Response {
+func user_agent(req *httpx.Request) *httpx.Response {
 	header := req.Header(httpx.HeaderUserAgent)
 	if header == nil {
 		return &httpx.Response{
@@ -49,15 +47,13 @@ func (h *Handlers) user_agent(req *httpx.Request) *httpx.Response {
 func (h *Handlers) file(req *httpx.Request) *httpx.Response {
 	filename, ok := req.Params["filename"]
 	if !ok {
-		return &httpx.Response{
-			Code: httpx.StatusNotFound,
-		}
+		return httpx.NotFound()
 	}
 
 	file, err := os.ReadFile(filepath.Join(h.Config.Dirname, filename))
 	if err != nil {
 		wd, _ := os.Getwd()
-    log.Printf("open %q (cwd=%q): %v", file, wd, err)
+    	log.Printf("open %q (cwd=%q): %v", file, wd, err)
 		return httpx.NotFound()
 	}
 
@@ -65,5 +61,26 @@ func (h *Handlers) file(req *httpx.Request) *httpx.Response {
 		httpx.StatusOK,
 		map[string]string{httpx.ContentType: "application/octet-stream"},
 		string(file),
+	)
+}
+
+func (h *Handlers) createFile(req *httpx.Request) *httpx.Response {
+	filename, ok := req.Params["filename"]
+	if !ok {
+		return httpx.NotFound()
+	}
+
+	file, err := os.Create(filepath.Join(h.Config.Dirname, filename))
+	if err != nil {
+		wd, _ := os.Getwd()
+    	log.Printf("open %q (cwd=%q): %v", file, wd, err)
+		return httpx.NotFound()
+	}
+	file.Write(req.Body)
+
+	return httpx.NewResponse(
+		httpx.StausCreated,
+		map[string]string{httpx.ContentType: "application/octet-stream"},
+		"",
 	)
 }

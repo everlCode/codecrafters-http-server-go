@@ -3,17 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
-	"net"
-	"os"
 
 	"github.com/codecrafters-io/http-server-starter-go/app/config"
 	"github.com/codecrafters-io/http-server-starter-go/app/httpx"
 	"github.com/codecrafters-io/http-server-starter-go/app/server"
 )
-
-// Ensures gofmt doesn't remove the "net" and "os" imports above (feel free to remove this!)
-var _ = net.Listen
-var _ = os.Exit
 
 func main() {
 	fmt.Println("Logs from your program will appear here!")
@@ -22,12 +16,13 @@ func main() {
 	handlers := NewHandlers(cfg)
 
 	router := httpx.NewRouter()
-	router.AddRoute("/", func(req *httpx.Request) *httpx.Response {
+	router.AddRoute("GET", "/", func(req *httpx.Request) *httpx.Response {
 		return httpx.Text(httpx.StatusOK, "")
 	})
-	router.AddRoute("/echo/{str}", handlers.echo)
-	router.AddRoute("/user-agent", handlers.user_agent)
-	router.AddRoute("/files/{filename}", handlers.file)
+	router.AddRoute("GET", "/echo/{str}", echo)
+	router.AddRoute("GET", "/user-agent", user_agent)
+	router.AddRoute("GET", "/files/{filename}", handlers.file)
+	router.AddRoute("POST", "/files/{filename}", handlers.createFile)
 
 	s := server.New(router.Route)
 	err := s.Start()

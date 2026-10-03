@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"net"
-	"os"
 
 	"github.com/codecrafters-io/http-server-starter-go/app/httpx"
 )
@@ -25,8 +24,7 @@ func(s *Server) Start() error {
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			fmt.Println("Error accepting connection: ", err.Error())
-			os.Exit(1)
+			return err
 		}
 
 		go s.serve(conn)
@@ -42,7 +40,10 @@ func(s *Server) serve(conn net.Conn) {
 		resp := httpx.Response{
 			Code: httpx.StatusBadRequest,
 		}
-		resp.Write(conn)
+		err := resp.Write(conn)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
 		return
 	}
 

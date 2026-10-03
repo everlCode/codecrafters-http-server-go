@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -12,7 +13,8 @@ type Request struct {
 	URI     string
 	Version string
 	Headers []*Header
-	Params map[string]string
+	Body    []byte
+	Params  map[string]string
 }
 
 func ReadRequest(reader io.Reader) (*Request, error) {
@@ -27,10 +29,11 @@ func ReadRequest(reader io.Reader) (*Request, error) {
 
 	}
 	var headers []*Header
+	var contentLenght int
 	for {
 		header, _, err := r.ReadLine()
 		if err != nil {
-			 return nil, err
+			return nil, err
 		}
 		if len(header) == 0 {
 			break
@@ -39,14 +42,26 @@ func ReadRequest(reader io.Reader) (*Request, error) {
 		if len(headerParts) < 2 {
 			continue
 		}
+		if headerParts[0] == ContentLength {
+			contentLenght, err = strconv.Atoi(headerParts[1])
+			if err != nil {
+				return nil, err
+			}
+		}
 		headers = append(headers, &Header{Name: headerParts[0], Value: headerParts[1]})
+	}
+	buff := make([]byte, contentLenght)
+	_, err = r.Read(buff)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Request{
-		Method:  parts[0],
+		Method:  strings.ToLower(parts[0]),
 		URI:     parts[1],
 		Version: parts[2],
 		Headers: headers,
+		Body:    buff,
 	}, nil
 }
 
@@ -61,7 +76,7 @@ func headerParts(header string) []string {
 
 func (r *Request) Header(name string) *Header {
 	for _, header := range r.Headers {
-		if strings.EqualFold(header.Name, name)  {
+		if strings.EqualFold(header.Name, name) {
 			return header
 		}
 	}

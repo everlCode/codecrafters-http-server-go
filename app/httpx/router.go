@@ -7,7 +7,7 @@ type Router struct {
 }
 
 type route struct {
-	Name     string
+	Method string
 	segments []*segment
 	Handler  Handler
 }
@@ -17,6 +17,11 @@ type segment struct {
 	isParam bool
 }
 
+const (
+	GET = "get"
+	POST = "post"
+)
+
 type Handler func(*Request) *Response
 
 func NewRouter() *Router {
@@ -24,7 +29,7 @@ func NewRouter() *Router {
 }
 
 func (r *Router) Route(req *Request) *Response {
-	route, params := r.match(req.URI)
+	route, params := r.match(req)
 	if route == nil {
 		return &Response{
 			Code: StatusNotFound,
@@ -35,8 +40,11 @@ func (r *Router) Route(req *Request) *Response {
 	return route.Handler(req)
 }
 
-func (r *Router) AddRoute(path string, handler Handler) {
-	route := route{Name: path, Handler: handler}
+func (r *Router) AddRoute(method string, path string, handler Handler) {
+	route := route{
+		Method: strings.ToLower(method),
+		Handler: handler,
+	}
 
 	for _, part := range strings.Split(path, "/") {
 		if strings.HasPrefix(part, "{") && strings.HasSuffix(part, "}") {
@@ -49,9 +57,12 @@ func (r *Router) AddRoute(path string, handler Handler) {
 	r.routes = append(r.routes, &route)
 }
 
-func (r *Router) match(path string) (*route, map[string]string) {
-	pathParts := strings.Split(path, "/")
+func (r *Router) match(req *Request) (*route, map[string]string) {
+	pathParts := strings.Split(req.URI, "/")
 	for _, route := range r.routes {
+		if route.Method != req.Method {
+			continue
+		}
 		if len(route.segments) != len(pathParts) {
 			continue
 		}
