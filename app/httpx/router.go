@@ -40,7 +40,7 @@ func (r *Router) Route(req *Request) *Response {
 
 func (r *Router) AddRoute(method string, path string, handler Handler) {
 	route := route{
-		Method: strings.ToUpper(method),
+		Method: method,
 		Handler: handler,
 	}
 
@@ -64,7 +64,7 @@ func (r *Router) match(req *Request) (*route, map[string]string) {
 		if len(route.segments) != len(pathParts) {
 			continue
 		}
-		var params map[string]string
+		
 		ok, params := route.match(pathParts)
 		if ok {
 			return route, params

@@ -48,12 +48,15 @@ func ReadRequest(reader io.Reader) (*Request, error) {
 	req.Headers = headers
 	var contentLenght int
 	contentLengthHeader := req.Header(ContentLength);if contentLengthHeader != nil {
-		contentLenght, _ = strconv.Atoi(contentLengthHeader.Value)
+		contentLenght, err = strconv.Atoi(contentLengthHeader.Value);if err != nil {
+			return nil, err
+		}
 	}
 	
 	if contentLenght > 0 {
 		buff := make([]byte, contentLenght)
-		_, err = r.Read(buff)
+		_, err = io.ReadFull(r, buff)
+		
 		if err != nil {
 			return nil, err
 		}
@@ -74,7 +77,7 @@ func readRequestLine(r *bufio.Reader) (string, string, string, error) {
 
 	}
 
-	return strings.ToUpper(parts[0]), parts[1], parts[2], nil
+	return parts[0], parts[1], parts[2], nil
 }
 
 func headerParts(header string) []string {

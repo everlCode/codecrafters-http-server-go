@@ -23,9 +23,7 @@ func Compress(next httpx.Handler) httpx.Handler {
 		if header = req.Header(httpx.AcceptEncoding);header == nil {
 			return resp
 		}
-		compressMethod := strings.ToLower(header.Value)
-		encodeHandler, ok := encoders[compressMethod]
-		if !ok {
+		method, encodeHandler := compressMethod(header.Value);if encodeHandler == nil {
 			return resp
 		}
 		compressedBody, err := encodeHandler(resp.Body)
@@ -33,20 +31,39 @@ func Compress(next httpx.Handler) httpx.Handler {
 			return resp
 		}
 		resp.Body = compressedBody
-		resp.AddHeader(httpx.ContentEncoding, compressMethod)
+		resp.AddHeader(httpx.ContentEncoding, method)
 
 		return resp
 	}
 }
 
 func gzipCompress(input []byte) ([]byte, error) {
+	if len(input) == 0 {
+		return input, nil
+	}
 	var buf bytes.Buffer
 	writer := gzip.NewWriter(&buf)
 	_, err := writer.Write(input);if err != nil {
 		return nil, err
 	}
-	writer.Close()
-
+	err = writer.Close();if err != nil {
+		return nil, err
+	}
 
 	return buf.Bytes(), nil
+}
+
+func compressMethod(methods string) (string, encoder) {
+	parts := strings.Split(methods, ",")
+
+	for _, method := range parts {
+		method = strings.ToLower(strings.TrimSpace(method))
+		encoder, ok := encoders[method];if !ok {
+			continue
+		}
+
+		return method, encoder
+	}
+
+	return "", nil
 }

@@ -72,8 +72,6 @@ func (h *Handlers) createFile(req *httpx.Request) *httpx.Response {
 	file, err := os.Create(filepath.Join(h.Config.Dirname, filename))
 	defer file.Close()
 	if err != nil {
-		wd, _ := os.Getwd()
-		log.Printf("open %q (cwd=%q): %v", file, wd, err)
 		return httpx.NotFound()
 	}
 	_, err = file.Write(req.Body)
