@@ -8,11 +8,11 @@ import (
 type Response struct {
 	Code    int
 	Headers []*Header
-	Body string
+	Body    string
 }
 
 const (
-	StatusOK     = 200
+	StatusOK         = 200
 	StatusBadRequest = 400
 	StatusNotFound   = 404
 )
@@ -50,7 +50,7 @@ func (hr Response) Write(writer io.Writer) error {
 	return err
 }
 
-func HTTPresponse(code int, headers map[string]string, body string) *Response {
+func NewResponse(code int, headers map[string]string, body string) *Response {
 	var hs []*Header
 
 	for name, vlaue := range headers {
@@ -58,8 +58,8 @@ func HTTPresponse(code int, headers map[string]string, body string) *Response {
 	}
 
 	return &Response{
-		Code: code,
+		Code:    code,
 		Headers: hs,
-		Body: body,
+		Body:    body,
 	}
 }

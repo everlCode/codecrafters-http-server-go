@@ -3,78 +3,75 @@ package http
 import "strings"
 
 type Router struct {
-	Routes map[string]Handler
+	Routes []*Route
 }
 
 type Route struct {
-	Keys map[string]string
-	Handler Handler
+	Name     string
+	Segments []*segment
+	Handler  Handler
+}
+
+type segment struct {
+	Name    string
+	isParam bool
 }
 
 type Handler func(*Request) *Response
 
-func NewRouter(routes map[string]Handler) *Router {
-	return &Router{
-		Routes: routes,
-	}
+func NewRouter() *Router {
+	return &Router{}
 }
 
 func (r *Router) Route(req *Request) *Response {
-	route := r.GetRoute(req.URI)
+	route, params := r.GetRoute(req.URI)
 	if route == nil {
 		return &Response{
 			Code: StatusNotFound,
 		}
 	}
-	req.Route = route
+	req.Params = params
 
 	return route.Handler(req)
 }
 
 func (r *Router) AddRoute(path string, handler Handler) {
-	r.Routes[path] = handler
+	route := Route{Name: path, Handler: handler}
+
+	for _, part := range strings.Split(path, "/") {
+		if strings.HasPrefix(part, "{") && strings.HasSuffix(part, "}") {
+			route.Segments = append(route.Segments, &segment{Name: strings.Trim(part, "{}"), isParam: true})
+		} else {
+			route.Segments = append(route.Segments, &segment{Name: part})
+		}
+	}
+
+	r.Routes = append(r.Routes, &route)
 }
 
-func (r *Router) GetRoute(path string) *Route {
+func (r *Router) GetRoute(path string) (*Route, map[string]string) {
 	pathParts := strings.Split(path, "/")
-	for route, h := range r.Routes {
-		r := Route{}
-		r.Handler = h
-		keys := make(map[string]string)
-		routeParts := strings.Split(route, "/")
-		if len(routeParts) != len(pathParts) {
+	for _, route := range r.Routes {
+		if len(route.Segments) != len(pathParts) {
 			continue
 		}
 
 		var isEqual bool = true
+		params := make(map[string]string)
 		for k, part := range pathParts {
-			if part != routeParts[k] && !isPartKey(routeParts[k]) {
+			if part != route.Segments[k].Name && !route.Segments[k].isParam {
 				isEqual = false
 				break
 			}
-			if isPartKey(routeParts[k]) {
-				keys[clearKey(routeParts[k])] = part
+			if route.Segments[k].isParam {
+				params[route.Segments[k].Name] = part
 			}
+
 		}
 		if isEqual {
-			r.Keys = keys
-			return &r
+			return route, params
 		}
-		
 	}
 
-
-	return nil
+	return nil, map[string]string{}
 }
-
-func isPartKey(path string) bool {
-	return strings.HasPrefix(path, "{")
-}
-
-func clearKey(path string) string {
-	str := strings.Replace(path, "{", "", 1)
-	return strings.Replace(str, "}", "", 1)
-}
-
-
-

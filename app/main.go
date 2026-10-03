@@ -24,14 +24,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	router := http.NewRouter(
-		map[string]http.Handler{"/": func(req *http.Request) *http.Response {
-			return &http.Response{
-				Code: http.StatusOK,
-			}
-		}},
-	)
+	router := http.NewRouter()
+	router.AddRoute("/", func(req *http.Request) *http.Response {
+		return &http.Response{
+			Code: http.StatusOK,
+		}
+	})
 	router.AddRoute("/echo/{str}", echo)
+	router.AddRoute("/user-agent", user_agent)
 
 	conn, err := l.Accept()
 	if err != nil {
@@ -52,4 +52,3 @@ func main() {
 	response := router.Route(req)
 	response.Write(conn)
 }
-

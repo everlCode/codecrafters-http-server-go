@@ -7,15 +7,32 @@ import (
 )
 
 func echo(req *http.Request) *http.Response {
-	if len(req.Route.Keys) == 0 {
+	param, ok := req.Params["str"]
+	if !ok {
 		return &http.Response{
 			Code: http.StatusNotFound,
 		}
 	}
 
-	return http.HTTPresponse(
+	return http.NewResponse(
 		http.StatusOK,
-		map[string]string{"Content-Type": "text/plain", "Content-Length": strconv.Itoa(len(req.Route.Keys["str"]))},
-		req.Route.Keys["str"],
+		map[string]string{"Content-Type": "text/plain", "Content-Length": strconv.Itoa(len(param))},
+		param,
+	)
+}
+
+
+func user_agent(req *http.Request) *http.Response {
+	header := req.Header(http.HeaderUserAgent)
+	if header == nil {
+		return &http.Response{
+			Code: http.StatusNotFound,
+		}
+	}
+
+	return http.NewResponse(
+		http.StatusOK,
+		map[string]string{"Content-Type": "text/plain", "Content-Length": strconv.Itoa(len(header.Value))},
+		header.Value,
 	)
 }
